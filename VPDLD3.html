@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF8">
+	<style>
+		.d3Container {
+			height: 100%;
+			margin: 0 auto;
+			width: 100%;
+		}
+		
+		svg {
+			font: 10px sans-serif;
+		}
+		
+		.axis path,
+		.axis line {
+			fill: none;
+			stroke: #000;
+			shape-rendering: crispEdges;
+		}
+		
+		.y.axis path {
+			fill: none;
+			stroke: #000;
+			shape-rendering: crispEdges;
+		}
+		
+		.brush .extent {
+			stroke: #fff;
+			fill-opacity: .125;
+			shape-rendering: crispEdges;
+		}
+		
+		.legends {
+			width: 20%;
+		}
+		
+		.contextChart {
+			width: 100%;
+		}
+		
+		.chartArea {
+			width: 800px;
+			overflow-x: auto
+		}
+		
+		.chart-here {
+			width: 800px;
+			height: 100%;
+			border: 1px solid rgb(181, 201, 233);
+			margin: 0 0 0 9%;
+		}
+		
+		.chartSvg {
+			width: 800px;
+			xheight: 100%;
+			xposition: absolute;
+		}
+		
+		.contextSvg {
+			height: 50px;
+		}
+		
+		.line {
+			fill: none;
+		}
+		
+		.background {
+			fill: lightGrey;
+			stroke: grey;
+			visibility: visible !important;
+		}
+		
+		.brush .extent {
+			stroke: grey;
+			fill-opacity: 1;
+			height: 15px !important;
+			fill: #ffffff;
+			shape-rendering: auto;
+		}
+		
+		.grid .tick {
+			stroke: lightgrey;
+			stroke-opacity: 0.7;
+			shape-rendering: crispEdges;
+		}
+		
+		.grid path {
+			stroke-width: 0;
+		}
+		
+		div.tooltip {
+			position: absolute;
+			text-align: center;
+			width: 150px;
+			height: auto;
+			padding: 2px;
+			font: 12px sans-serif;
+			background: white;
+			border: 0px;
+			pointer-events: none;
+			border: 1px solid #000000;
+		}
+		
+		.toolTipRect rect {
+			fill: ivory;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="chart-div">
+		<div class="d3Container">
+			<div class="chartArea" id="chartArea_Chart_1234" style="float:left">
+				<div style="text-align:center;">
+					<label id="title_Chart_1234" style="font-size:12px;font-weight:bold;font-family:Verdana,sans-serif;"></label>
+				</div>
+				<div id="chart-container_Chart_1234" class="chart-here"></div>
+				<div id="contextChart_Chart_1234"></div>
+			</div>
+			<div id="legend_Chart_1234" class="legends" style="float:left"></div>
+		</div>
+	</div>
+	<script src="https://d3js.org/d3.v3.min.js"></script>
+	<!--script src="test2Data.js"></script-->
+	<!--script src="realData.js"></script-->
+	<script src="realData2.js"></script>
+	<script>
+		var chartDataSource = sources;
+		//debugger;
+		//document.getElementById('title_1234').innerHTML = chartDataSource.title;
+		renderD3Chart('Chart_1234',chartDataSource,false);
+
+function renderD3Chart(chartId,chartData,isPLWEBMap){
+	var clientW = 800;//document.getElementById('chartArea_'+chartId).clientWidth; 
+	var margin = {top: 10, right: 10, bottom: 100, left: 0},
+	margin2 = {top: 10, right: 10, bottom: 20, left: 0};
+	var sources = chartData;
+	margin.left = sources.array.length * 25;
+	margin2.left = sources.array.length * 25;
+	var width = clientW - margin.left - margin.right,
+	height = 300 - margin.top - margin.bottom,
+	height2 = 80 - margin2.top - margin2.bottom;
+	console.log("cl "+clientW +" -- Width "+width);
+	var colors = ["Green","Blue","Red","Orange"];
+	var color = d3.scale.category10(); 
+	//var parseDate = d3.time.format("%y-%b-%d %H:%M").parse;
+	var parseDate = d3.time.format("%Y-%m-%d");
+
+	var x = d3.time.scale().range([0, width-350]),
+	x2 = d3.time.scale().range([0, width-280]),
+	y,y1,y2,y3,
+	yArray = [y,y1,y2,y3]; 
+	/*yArray = []; 
+	for(var i=0; i<sources.array.length; i++){
+		yArray[i] = "y"+i;
+	}*/
+	for(var i=0; i<4; i++)
+		yArray[i] = d3.scale.linear().range([height, 0])
+		var xAxis = d3.svg.axis().scale(x).orient("bottom").tickFormat(parseDate),
+		xAxis2 = d3.svg.axis().scale(x2).orient("bottom").tickFormat(parseDate);
+	//loop here
+	var yAxis,yAxis1,yAxis2,yAxis3;
+	yAxisArray = [yAxis,yAxis1,yAxis2,yAxis3];
+	for(var i=0; i<sources.array.length; i++){
+		yAxisArray[i] = d3.svg.axis().scale(yArray[i]).orient("left");
+
+	}
+
+	var brush = d3.svg.brush()
+	.x(x2)
+	//.extent([1468896563000,sources.xMax])
+	.on("brush", brush);
+
+	//from multiAxis
+	//loop here
+	//var lineFun1,lineFun2,lineFun3,lineFun4;
+	//var lineFunctions = [lineFun1,lineFun2,lineFun3,lineFun4]
+	//for(var k=0; k<sources.array.length; k++){
+	var lineFun1 = d3.svg.line()
+	.defined(function(d) { return !isNaN(d.value); })
+	.interpolate("cubic")
+	.x(function(d,i) { return x(d.date); })
+	.y(function(d) {return yArray[0](d.value); })
+	//}			
+	var lineFun2 = d3.svg.line()
+	.defined(function(d) { return !isNaN(d.value); })
+	.interpolate("cubic")
+	.x(function(d,i) { return x(d.date);})
+	.y(function(d) { return yArray[1](d.value); })
+
+	var lineFun3 = d3.svg.line()
+	.defined(function(d) { return !isNaN(d.value); })
+	.interpolate("cubic")
+	.x(function(d,i) { return x(d.date);})
+	.y(function(d) { return yArray[2](d.value); })
+
+	var lineFun4 = d3.svg.line()
+	.defined(function(d) { return !isNaN(d.value); })
+	.interpolate("cubic")
+	.x(function(d,i) { return x(d.date);})
+	.y(function(d) { return yArray[3](d.value); }) 
+
+	//from multiAxis	
+	var svg = d3.select("#chart-container_"+chartId).append("svg")
+	.attr("width", width + margin.left + margin.right)
+	.attr("height", height + margin.top + margin.bottom-60)
+	.attr("viewBox","0 0 500 240")
+	.attr("preserveAspectRatio","xMidYMid meet")
+	.attr("class","chartSvg");
+	//.attr('transform','translate(210,0)' );
+	var svgContext = d3.select("#contextChart_"+chartId).append("svg")
+	.attr("width", width + margin.left + margin.right)
+	.attr("height", height2 + margin2.top + margin2.bottom)
+	.attr("viewBox","0 0 500 50")
+	.attr("preserveAspectRatio","xMidYMid meet")
+	.attr("class","chartSvg contextSvg");
+
+	svg.append("defs").append("clipPath")
+	.attr("id", "clip")
+	.append("rect")
+	.attr("width", width)
+	.attr("height", height);
+
+	var focus = svg.data(sources.array).append("g")
+	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	var context = svgContext.append("g")
+	.attr("transform", "translate(0 ," + margin2.top + ")");
+
+	// console.log("SRC "+JSON.stringify(sources.array));
+
+	// x.domain(d3.extent(data, function(d) { return d.date; }));
+	x.domain([sources.xMin,sources.xMax]);
+	//x.domain([1472197994000,1472104685000]);
+	//loop here
+	for(var i=0; i<sources.array.length; i++){
+		yArray[i].domain([sources.array[i].min,sources.array[i].max +  (sources.array[i].max * 0.2)]);
+	}
+
+
+	x2.domain(x.domain());
+
+	var prevChannelLength = 0;
+	var classAppender = 0;
+	//loop here
+	if(sources.array.length >= 1){
+		for(var i=0; i<sources.array[0].values.length; i++){  
+			focus.append("svg:path").attr("d", lineFun1(sources.array[0].values[i].values)).attr("class", "line line"+i)
+			.attr("id",(sources.array[0].values[i].color).replace("#","legend_"+chartId) ).attr("stroke",sources.array[0].values[i].color)
+			.attr("clip-path", "url(#clip)").attr('stroke-width', 2);
+
+			focus.append("g").selectAll("circle")
+			.data(function(d){return sources.array[0].values[i].values})
+			.enter()
+			.append("circle")
+			.attr("r", 1)
+			.attr("cx", function(dd){return x(dd.date)})
+			.attr("cy", function(dd){return yArray[0](dd.value)})
+			.attr("xToolTip", function(dd){return dd.date})
+			.attr("yToolTip", function(dd){return dd.value})
+			.attr("fill", "none")
+			.attr("stroke",sources.array[0].values[i].color)
+			.attr("clip-path", "url(#clip)")
+			.attr("class","plotCircle"+classAppender +" "+(sources.array[0].values[i].color).replace("#","legend_"+chartId))
+			
+		}
+	}
+	if(sources.array.length >= 2){
+		prevChannelLength = sources.array[0].values.length;
+		for(var i=0; i<sources.array[1].values.length; i++){    
+			classAppender = i+prevChannelLength;
+			focus.append("svg:path").attr("d", 
+					lineFun2(sources.array[1].values[i].values))
+					.attr("class", "line line"+classAppender).attr("id",(sources.array[1].values[i].color).replace("#","legend_"+chartId) )
+					.attr("stroke",sources.array[1].values[i].color).attr("clip-path", "url(#clip)").attr('stroke-width', 2)
+					;
+			var circles = focus.append("g").selectAll("circle")
+			.data(function(d){return sources.array[1].values[i].values})
+			.enter()
+			.append("circle")
+			.attr("r", 1)
+			.attr("cx", function(dd){return x(dd.date)})
+			.attr("cy", function(dd){return yArray[1](dd.value)})
+			.attr("xToolTip", function(dd){return dd.date})
+			.attr("yToolTip", function(dd){return dd.value})
+			.attr("fill", "none")
+			.attr("stroke",sources.array[1].values[i].color)
+			.attr("clip-path", "url(#clip)")
+			.attr("class","plotCircle"+classAppender +" "+(sources.array[1].values[i].color).replace("#","legend_"+chartId));
+		}
+	}
+	if(sources.array.length >= 3){
+		prevChannelLength += sources.array[1].values.length;
+		for(var i=0; i<sources.array[2].values.length; i++){ 
+			classAppender = i+prevChannelLength;
+			focus.append("svg:path").attr("d", lineFun3(sources.array[2].values[i].values)).attr("class", "line line"+classAppender)
+			.attr("id",(sources.array[2].values[i].color).replace("#","legend_"+chartId) ).attr("stroke",sources.array[2].values[i].color)
+			.attr("clip-path", "url(#clip)").attr('stroke-width', 2)
+			;
+
+			focus.append("g").selectAll("circle")
+			.data(function(d){return sources.array[2].values[i].values})
+			.enter()
+			.append("circle")
+			.attr("r", 1)
+			.attr("cx", function(dd){return x(dd.date)})
+			.attr("cy", function(dd){return yArray[2](dd.value)})
+			.attr("xToolTip", function(dd){return dd.date})
+			.attr("yToolTip", function(dd){return dd.value})
+			.attr("fill","none")
+			.attr("stroke",sources.array[2].values[i].color)
+			.attr("clip-path", "url(#clip)")
+			.attr("class","plotCircle"+classAppender +" "+(sources.array[2].values[i].color).replace("#","legend_"+chartId));
+		}
+	}
+	if(sources.array.length >= 4){
+		prevChannelLength += sources.array[2].values.length;
+		for(var i=0; i<sources.array[3].values.length; i++){   
+			classAppender = i+prevChannelLength;
+			focus.append("svg:path").attr("d", lineFun4(sources.array[3].values[i].values)).attr("class", "line line"+classAppender)
+			.attr("id",(sources.array[3].values[i].color).replace("#","legend_"+chartId) ).attr("stroke",sources.array[3].values[i].color)
+			.attr("clip-path", "url(#clip)").attr('stroke-width', 2)
+			;
+
+			focus.append("g").selectAll("circle")
+			.data(function(d){return sources.array[3].values[i].values})
+			.enter()
+			.append("circle")
+			.attr("r", 1)
+			.attr("cx", function(dd){return x(dd.date)})
+			.attr("cy", function(dd){return yArray[3](dd.value)})
+			.attr("xToolTip", function(dd){return dd.date})
+			.attr("yToolTip", function(dd){return dd.value})
+			.attr("fill", "none")
+			.attr("stroke",sources.array[3].values[i].color)
+			.attr("clip-path", "url(#clip)")
+			.attr("class","plotCircle"+classAppender +" "+(sources.array[3].values[i].color).replace("#","legend_"+chartId));
+		}
+	}
+	//X Axis with ticks rotated
+	focus.append("g")
+	.attr("class", "x axis")
+	.attr("transform", "translate(0," + height + ")")
+	.call(xAxis)
+	.selectAll("text")	
+	.style("text-anchor", "end")
+	.attr("dx", "-.8em")
+	.attr("dy", ".15em")
+	.attr("transform", "rotate(-25)");
+
+	// X Axis Label	
+	focus.append("text")             
+	.attr("x", width )
+	.attr("y",  height  )
+	.style("text-anchor", "end")
+	.text("TimeStamp");	
+	//loop here		
+	for(var i=0; i<sources.array.length; i++){
+
+		focus.append("g")
+		.attr("class", "y axis")
+		.attr("transform", "translate("+(i*-60)+",0)")
+		.call(yAxisArray[i]);
+		focus.append("text")
+		.attr("transform", "rotate(-90)")
+		.attr("y",  -50+(i*-60))
+		.attr("x",0 - (height / 2))
+		.attr("dy", "1em")
+		.style("text-anchor", "middle")
+		.text(sources.array[i].name);
+
+	}	
+	focus.append("g")
+	.attr("class", "grid")
+	.attr("transform", "translate(0," + height + ")")
+	.call(make_x_axis(x)
+			.tickSize(-height, 0, 0)
+			.tickFormat("")
+	)	
+	focus.append("g")            
+	.attr("class", "grid")
+	.call(make_y_axis(y)
+			.tickSize(-width, 0, 0)
+			.tickFormat("")
+	)	
+
+	var brushRange = context.append("g")
+	.attr("class", "brushRange")
+	.attr("transform","translate(0,10)");
+
+	brushRange.append('text')
+	.attr("class","minBrush_"+chartId);
+	brushRange.append('text')
+	.attr("class","maxBrush_"+chartId);
+
+	context.append("g")
+	.attr("class", "x brush")
+	.call(brush)
+	.selectAll("rect")
+	.attr("y", -6)
+	.attr("height", 10);
+
+	//changing context chart to a slider
+
+	var svgForLegend = d3.select('#legend_'+chartId)
+	.data(sources.array)
+	.append('svg')
+	.attr("width", 250)
+	.attr("height", 300);		
+
+	//var legendContainer = svgForLegend.append('rect').attr("height","200").attr("width","100").style("stroke","black").style("fill","none") ;
+
+	var legendersGroup = svgForLegend.selectAll('g')
+	.data(sources.array)
+	.enter()
+	.append('g')
+	.attr('transform', function (d, i) { return 'translate(10,'+(i*70)+')' });
+	var legenders = legendersGroup.selectAll('g')
+	.data(function(d, i) { return d.values; })
+	.enter()
+	.append('g')
+	//.attr('transform',function (d, i) { return -((i*margin.right)+margin.right) })
+	//.attr('transform',function (d, i) { return 'translate('+(i*10)+',0)' });
+	legendersGroup.append('text') //Legend Group name :: Channel Name
+	.attr("x", 20)
+	.attr("width", 5)
+	.attr("height", 5)
+	.attr("y",  20 )
+	.attr("font-size", "10")
+	.text(function (d, i) { return d.name; })
+	//.text(function (d, i) { return d.type; })
+
+	legenders.append("rect") //Each trend's Legend rect
+	.attr("x", 30)
+	.attr("y", function (d, i) { return (i * 13) + 25; })
+	.attr("width", 10)
+	.attr("height", 10)
+	.on("click", function(d){  
+		var legendClicked = d3.select(this).attr("id");
+		console.log("legendClicked "+legendClicked);
+		var active = d.active ? false : true;
+		var lineOpacity = d.active ? 0 : 1;
+		var circleOpacity = d.active ? 0 : 1;
+		var legendOpacity = d.active ? 0.3 : 1;
+		// hide or show the elements
+		d3.select("#"+legendClicked).style("opacity", lineOpacity);
+		d3.selectAll("."+legendClicked).style("opacity", lineOpacity);
+		d3.select(this).style("opacity", legendOpacity);
+		// update whether or not the elements are active
+		d.active = active;      
+
+	})
+	.style("fill", function (d, i) { d.active = true; return d.color;})
+	.attr("id",function (d, i) { d.active = true; return (d.color).replace("#","legend_"+chartId);})
+	legenders.append('text') //Each trend's Legend text
+	.attr("x", 50)
+	.attr("width", 5)
+	.attr("height", 5)
+	.attr("y", function (d, i) {return  (i * 13) + 33; })
+	.attr("font-size", "10")
+	.text(function (d, i) { return d.type; })
+
+	//Mouse over - marker
+
+	var mouseG = svg.append("g")
+	.attr("class", "mouse-over-effects")
+	.attr("transform","translate("+margin.left+",10)");
+	//Tool Tip for X axis Value				
+	mouseG.append('rect').attr('class','xAxis-toolTip-rect').style("opacity","0").style("fill","white").style("stroke","grey").attr("y","10")
+	.attr("width",50*sources.array.length).attr("height","20"); 
+	mouseG.append('text').attr('class','xAxis-toolTip').style("opacity","0"); 
+
+	mouseG.append("path") 
+	.attr("class", "mouse-line")
+	.style("stroke", "black")
+	.style("stroke-width", "1px")
+	.style("opacity", "0");
+
+	var markerGroups = mouseG.selectAll('g')
+	.data(sources.array)
+	.enter()
+	.append('g')
+	.attr("class",function(d, i) { return "G"+i })
+
+	var lines = document.getElementsByClassName('line');
+
+	var mousePerLine = markerGroups.selectAll('.mouse-per-line')
+	.data(function(d, i) { return d.values; })
+	.enter()
+	.append("g")
+	.attr("class",  function(d, i) { return "mouse-per-line" });
+	var toolTipRect = markerGroups.append("g")
+	.attr('width', 100) // can't catch mouse events on a g element
+	.attr('height', 100)
+	.attr('fill', 'none')
+	.attr('stroke', 'grey')
+	.attr('class','toolTipRect')
+	.style("opacity", "0") ;
+
+	var grpforToolTip = toolTipRect.selectAll('g')
+	.data(function(d, i) { return d.values; })
+	.enter()
+	.append('g')
+	.style("opacity", "0") ;
+
+	grpforToolTip.append("rect")
+	.attr('width', 50) // can't catch mouse events on a g element
+	.attr('height', 20)
+	.attr('fill', '#ffffff')
+	.attr('stroke', 'none')
+	//.attr('class','toolTipRect')
+	.style("opacity", "0") ;
+
+	grpforToolTip.append("text"); 
+
+	mousePerLine.append("circle")
+	.attr("r", 3)
+	//.style("stroke", function(d) {return color(d.name);})
+	.style("stroke", function(d) {return d.color;})
+	.style("fill",  function(d) {return d.color;})
+	.style("stroke-width", "1px")
+	.style("opacity", "0");
+
+	//mousePerLine.append("text")
+	//.attr("transform", "translate(10,3)");
+
+	/*mouseG.append('svg:rect') // append a rect to catch mouse movements on canvas
+	      .attr('width', width) // can't catch mouse events on a g element
+	      .attr('height', height)
+	      .attr('fill', 'none')
+	      .attr('pointer-events', 'all')
+		  //.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+		  .attr("transform", "translate(0,0)"); */
+
+	//for Tool Tip
+	var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 0);
+
+	d3.selectAll('#chart-container_'+chartId+' circle')
+	.on('mouseout', function() { // on mouse out hide line, circles and text
+		var parentChart = this.parentNode.parentNode.parentNode.parentNode.id;
+		d3.select('#chart-container_'+chartId+' .mouse-line')
+		.style("opacity", "0");
+		d3.selectAll('#chart-container_'+chartId+' .mouse-per-line circle')
+		.style("opacity", "0");
+		//d3.selectAll(".mouse-per-line text")
+		//.style("opacity", "0");
+		d3.selectAll('#chart-container_'+chartId+' .toolTipRect')
+		.style("opacity", "0") ;
+		d3.selectAll('#chart-container_'+chartId+' .toolTipRect g')
+		.style("opacity", "0") ;
+		d3.selectAll('#chart-container_'+chartId+' .toolTipRect g rect')
+		.style("opacity", "0") ;
+		d3.selectAll('#chart-container_'+chartId+' .toolTipRect g text')
+		.style("opacity", "0") ;
+		d3.select('.xAxis-toolTip').style("opacity", "0") ;
+		d3.select('.xAxis-toolTip-rect').style("opacity", "0") ;
+	})
+	.on('mouseover', function() { // on mouse in show line, circles and text
+		//setTimeout(function(){
+		
+		var mouse = d3.mouse(this);
+		var xToolTip = new Date(x.invert(mouse[0]));
+		//var yValue = x.invert(mouse[0])
+		console.log("Hovered!");
+		d3.select(this)
+		.transition()
+		.duration(0)
+		.attr("r",10)
+		.attr("fill",d3.select(this).attr("stroke"))
+		.attr("style","opacity:0.3")
+
+		 d3.selectAll(".tooltip").transition()		
+                .duration(200)		
+                .style("opacity", .9);		
+		d3.selectAll(".tooltip").html(new Date((Number(d3.select(this).attr("xToolTip")))).yyyymmddhhMMss() + ", "  + d3.select(this).attr("yToolTip")   )	
+                .style("left", (d3.event.pageX) + "px")		
+                .style("top", (d3.event.pageY - 40) + "px");	
+
+		d3.selectAll('#chart-container_'+chartId+' circle')
+		.on("click", function() {
+			var mouse = d3.mouse(this);
+			var xToolTip = new Date(x.invert(mouse[0]));
+			console.log("Clicked - "+xToolTip.yyyymmddhhMMss());
+		})
+
+		d3.selectAll('#chart-container_'+chartId+' circle')
+		.on("mouseout", function() {
+			d3.select(this)
+			.transition()
+			.duration(1000)
+			.attr("r",1)
+			.attr("fill","none")
+
+			d3.selectAll(".tooltip").transition()		
+			.duration(500)		
+			.style("opacity", 0); 
+			//.attr("style","opacity:0.3")
+
+			d3.selectAll(".mouse-line")	
+			.style("opacity", 0); 
+			d3.select('#chart-container_'+chartId+' .mouse-line')
+			.style("opacity", "0");
+			d3.selectAll('#chart-container_'+chartId+' .mouse-per-line circle')
+			.style("opacity", "0");
+			d3.selectAll('#chart-container_'+chartId+' .toolTipRect')
+			.style("opacity", "0") ;
+			d3.selectAll('#chart-container_'+chartId+' .toolTipRect g')
+			.style("opacity", "0") ;
+			d3.selectAll('#chart-container_'+chartId+' .toolTipRect g rect')
+			.style("opacity", "0") ;
+			d3.selectAll('#chart-container_'+chartId+' .toolTipRect g text')
+			.style("opacity", "0") ;
+			d3.select('.xAxis-toolTip').style("opacity", "0") ;
+			d3.select('.xAxis-toolTip-rect').style("opacity", "0");
+		})
+		
+		
+		var parentChart = this.parentNode.parentNode.parentNode.parentNode.id;
+		d3.select('#chart-container_'+chartId+' .mouse-line')
+		.style("opacity", "1");
+		d3.selectAll('#chart-container_'+chartId+' .mouse-per-line circle')
+		.style("opacity", "1");
+		//d3.selectAll(".mouse-per-line text")
+		//.style("opacity", "1");
+		d3.selectAll('#chart-container_'+chartId+' .toolTipRect')
+		.style("opacity", "1") ;
+		//d3.selectAll(".toolTipRect text")
+		//.style("opacity", "1") ;
+		d3.selectAll('#chart-container_'+chartId+' .toolTipRect g')
+		.style("opacity", "1") ;
+		d3.selectAll('#chart-container_'+chartId+' .toolTipRect g rect')
+		.style("opacity", "1") ;
+		d3.selectAll('#chart-container_'+chartId+' .toolTipRect g text')
+		.style("opacity", "1") ;
+		d3.select('.xAxis-toolTip').style("opacity", "1") ;
+		d3.select('.xAxis-toolTip-rect').style("opacity", "1") ;
+		console.log("b4 this "+this.parentNode.parentNode.parentNode.id);
+
+		var mouse = d3.mouse(this);
+		xToolTip = new Date(x.invert(mouse[0]));
+		d3.select('.xAxis-toolTip-rect').attr("x",mouse[0]+20);
+		d3.select('.xAxis-toolTip').text(xToolTip.yyyymmddhhMMss()).attr("x",mouse[0]+25).attr("y",25).style("stroke","tomato");
+		//console.log("Mouse Obj "+mouse);
+		var toolTips = [];var G0 = [],G1 = [];
+		//console.log("Mouse Obj "+mouse);
+		d3.select(".mouse-line")
+		.attr("d", function() {
+			var d = "M" + mouse[0] + "," + 190;
+			d += " " + mouse[0] + "," + 0;
+			return d;
+		});
+		d3.selectAll(".toolTipRect")
+		.attr("x", mouse[0]+10);
+
+		d3.selectAll(".mouse-per-line")
+		.attr("transform", function(d, i) {
+			//if(lines[i].nodeName.toLowerCase() == "div"){ i=i+1;}
+				//console.log(width/mouse[0])
+				var xDate = x.invert(mouse[0]),
+				bisect = d3.bisector(function(d) { return d.date; }).right;
+				//console.log("h "+JSON.stringify(d.values));
+				idx = bisect(d.values, xDate);
+
+				var beginning = 0;
+				var end = lines[i].getTotalLength();
+				var  target = null;
+				while (true){
+					target = Math.floor((beginning + end) / 2);
+					pos = lines[i].getPointAtLength(target);
+					//console.log("Pos "+pos.x +"-"+pos.y);
+					if ((target === end || target === beginning) && pos.x !== mouse[0]) {
+						break;
+					}
+					if (pos.x > mouse[0])      end = target;
+					else if (pos.x < mouse[0]) beginning = target;
+					else break; //position found
+				}
+
+				return "translate(" + mouse[0] + "," + pos.y +")";
+
+		});
+		// toolTips.push({"G0":G0});toolTips.push({"G1":G1});
+		for(var k=0; k<4 ; k++){
+		//var k=0;
+			if(d3.selectAll(".G"+k)){
+				//console.log(console.log("G: "+i));
+				d3.selectAll('#chart-container_'+chartId+' .G'+k+' .toolTipRect g text')
+				.attr("transform", function(d, i) {
+					//if(lines[i].nodeName.toLowerCase() == "div"){ i=i+1;}
+						var xDate = x.invert(mouse[0]),
+						bisect = d3.bisector(function(d) { return d.date; }).right;
+						idx = bisect(d.values, xDate);
+
+						var beginning = 0;
+						var end = lines[i].getTotalLength();
+						var  target = null;
+						while (true){
+							target = Math.floor((beginning + end) / 2);
+							pos = lines[i].getPointAtLength(target);
+							//console.log("Pos "+pos.x +"-"+pos.y);
+							if ((target === end || target === beginning) && pos.x !== mouse[0]) {
+								break;
+							}
+							if (pos.x > mouse[0])      end = target;
+							else if (pos.x < mouse[0]) beginning = target;
+							else break; //position found
+						}
+
+						var tipPosition = mouse[0]+20+(k*50);
+						console.log(tipPosition + '  = ' + (width-200) + '  ');
+						console.log(tipPosition > width-200);
+						if(tipPosition > (width-200)) 
+								tipPosition = mouse[0]-120+(k*50);
+
+						d3.select(this).attr("stroke", d.color).text(yArray[k].invert(pos.y).toFixed(2));
+						d3.select(this.parentNode).selectAll("rect").attr("transform","translate("+tipPosition+","+((i*20)+32)+")");
+						tipPosition = tipPosition+5;
+
+						return "translate("+tipPosition+","+(i*20+45)+")" ;
+					//}else return "";
+				});	
+			}
+		}
+		//}, 3000);
+	});
+	//Mouse Over Marker 
+	d3.selectAll('.extent').attr("y","-10")	
+	// gridlines in x axis function
+
+	function make_x_axis() {
+		return d3.svg.axis()
+		.scale(x)
+		.orient("bottom")
+
+	}
+
+	// gridlines in y axis function
+	function make_y_axis() {
+		return d3.svg.axis()
+		.scale(yArray[0])
+		.orient("left")
+
+	}		
+
+
+	function brush() {
+		x.domain(brush.empty() ? x2.domain() : brush.extent());
+		var xda = brush.x();
+		//console.log("Brush "+x2.domain());
+		var minBrush =new Date(brush.extent()[0]); 
+		var maxBrush = new Date(brush.extent()[1]);
+		d3.select('.minBrush_'+chartId)
+		.text(minBrush.yyyymmddhhMMss())
+		.attr("x",20)
+		.attr("y",10)
+		.attr("font-size", "10px");;
+		d3.select('.maxBrush_'+chartId)
+		.text(maxBrush.yyyymmddhhMMss())
+		.attr("x",(width + margin.left + margin.right)/2)
+		.attr("y",10)
+		.attr("font-size", "10px");;
+		var prevChannelLength = 0;
+		var classAppender = 0;
+
+
+		if(sources.array.length >= 1){
+
+			for(var i=0; i<sources.array[0].values.length; i++){  
+				focus.selectAll("path.line"+i).attr("d",  function(d) {
+					return lineFun1(sources.array[0].values[i].values)
+				});
+				focus.selectAll(".plotCircle"+i)
+				.attr("cx", function(dd){return x(dd.date)})
+				.attr("cy", function(dd){return yArray[0](dd.value)})
+
+
+			}
+		} 
+
+		if(sources.array.length >= 2){
+			prevChannelLength = prevChannelLength + sources.array[0].values.length;
+			for(var i=0; i<sources.array[1].values.length; i++){  
+				classAppender = i+prevChannelLength;
+				focus.selectAll("path.line"+classAppender).attr("d",  function(d) {
+					return lineFun2(sources.array[1].values[i].values)
+				});
+				focus.selectAll(".plotCircle"+classAppender)
+				.attr("cx", function(dd){return x(dd.date)})
+				.attr("cy", function(dd){return yArray[1](dd.value)})			
+				
+
+			}
+		}
+		if(sources.array.length >= 3){
+			prevChannelLength = prevChannelLength + sources.array[1].values.length;
+			for(var i=0; i<sources.array[2].values.length; i++){  
+				classAppender = i+prevChannelLength;
+				focus.selectAll("path.line"+classAppender).attr("d",  function(d) {
+					return lineFun3(sources.array[2].values[i].values)
+				});
+				focus.selectAll(".plotCircle"+classAppender)
+				.attr("cx", function(dd){return x(dd.date)})
+				.attr("cy", function(dd){return yArray[2](dd.value)})	
+				
+
+			}
+		}
+		if(sources.array.length >= 4){
+			prevChannelLength =prevChannelLength+ sources.array[2].values.length;
+			for(var i=0; i<sources.array[3].values.length; i++){  
+				classAppender = i+prevChannelLength;
+				focus.selectAll("path.line"+classAppender).attr("d",  function(d) {
+					return lineFun4(sources.array[3].values[i].values)
+				});
+				focus.selectAll(".plotCircle"+classAppender)
+				.attr("cx", function(dd){return x(dd.date)})
+				.attr("cy", function(dd){return yArray[3](dd.value)})	
+				
+
+			}
+		} 
+
+		focus.select(".x.axis").call(xAxis)
+		.selectAll("text")	
+		.style("text-anchor", "end")
+		.attr("dx", "-.8em")
+		.attr("dy", ".15em")
+		.attr("transform", "rotate(-25)");
+
+
+	}
+
+	Date.prototype.yyyymmddhhMMss = function() {
+		var mm = this.getMonth() + 1; // getMonth() is zero-based
+		var dd = this.getDate();
+		var hh = this.getHours();
+		var MM = this.getMinutes();
+		var ss = this.getSeconds();
+		if(dd<10)    dd='0'+dd;
+		if(mm<10)    mm='0'+mm;
+		if(hh<10)	 hh='0'+hh;
+		if(MM<10)	 MM='0'+MM;
+		if(ss<10)	 ss='0'+ss;
+		return this.getFullYear()+"-"+mm+"-"+dd+" "+hh+":"+MM+":"+ss;
+	};
+}
+		
+	</script>
+	</c:forEach>
+
+
+
+</body>
+
+</html>
